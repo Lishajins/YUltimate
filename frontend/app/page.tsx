@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { useForm } from 'react-hook-form';
@@ -22,9 +23,18 @@ export default function Home() {
   const router = useRouter();
   const { register, handleSubmit, formState: { errors } } = useForm<AuthForm>();
 
+  useEffect(() => {
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
+
   if (user) {
-    router.push('/dashboard');
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
   const onSubmit = async (data: AuthForm) => {
@@ -144,9 +154,13 @@ export default function Home() {
           <div className="mt-4 text-center">
             <Button
               variant="outline"
-              onClick={() => {
-                login('spectator@yultimate.com', 'spectator123');
-                router.push('/dashboard');
+              onClick={async () => {
+                try {
+                  await login('spectator@yultimate.com', 'spectator123');
+                  router.push('/dashboard');
+                } catch (e) {
+                  console.error('Spectator quick login failed', e);
+                }
               }}
               className="w-full"
             >

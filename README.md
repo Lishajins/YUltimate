@@ -1,6 +1,6 @@
-# YUltimate - Ultimate Frisbee Hub
+# YUltimate
 
-A comprehensive platform for Ultimate Frisbee tournament management, coaching tools, and community features.
+All‑in‑one Ultimate Frisbee platform: tournaments, coaching tools, gallery, and role‑based access.
 
 ## Features
 
@@ -32,7 +32,7 @@ A comprehensive platform for Ultimate Frisbee tournament management, coaching to
 ### Backend
 - **NestJS** - Node.js framework
 - **Prisma** - Database ORM
-- **PostgreSQL** - Database
+- **SQLite** - Database (PostgreSQL ready)
 - **JWT** - Authentication
 - **bcryptjs** - Password hashing
 
@@ -47,44 +47,43 @@ A comprehensive platform for Ultimate Frisbee tournament management, coaching to
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database
 - npm or yarn
 
-### 1. Clone and Install
+### Option 1: Automated Setup (Recommended)
 ```bash
-git clone <repository-url>
-cd YUltimate
+# Run the fix + install script (cleans node_modules, installs deps)
+npm run fix
 
-# Install backend dependencies
+# Setup database
 cd backend
-npm install
+npm run db:generate
+npm run db:push
+npm run db:seed
 
-# Install frontend dependencies
-cd ../frontend
-npm install
+# Start both servers
+npm run dev
 ```
 
-### 2. Database Setup
+### Option 2: Manual Setup
+
+**1. Install Dependencies**
 ```bash
 cd backend
+npm install --legacy-peer-deps
 
-# Copy environment file
-cp .env.example .env
+cd ../frontend
+npm install --legacy-peer-deps
+```
 
-# Edit .env with your database credentials
-# DATABASE_URL="postgresql://username:password@localhost:5432/yultimate"
-
-# Generate Prisma client
+**2. Setup Database**
+```bash
+cd backend
 npm run db:generate
-
-# Push database schema
 npm run db:push
-
-# Seed with demo data
 npm run db:seed
 ```
 
-### 3. Start Development Servers
+**3. Start Servers**
 
 **Backend (Terminal 1):**
 ```bash
@@ -100,8 +99,8 @@ npm run dev
 # Runs on http://localhost:3000
 ```
 
-### 4. Access the Application
-Open http://localhost:3000 in your browser.
+**4. Access Application**
+Open http://localhost:3000
 
 ## Demo Credentials
 
@@ -114,7 +113,7 @@ After seeding, use these credentials to test different roles:
 
 ## API Documentation
 
-See [docs/api-reference.md](docs/api-reference.md) for complete API documentation.
+See `docs/api-reference.md` for complete API documentation.
 
 ## Project Structure
 
@@ -172,19 +171,11 @@ YUltimate/
 
 ### Backend (.env)
 ```env
-DATABASE_URL=postgresql://postgres:password@localhost:5432/yultimate
-JWT_SECRET=your-super-secret-jwt-key-here
+DATABASE_URL="file:./dev.db"
+JWT_SECRET=yultimate-super-secret-jwt-key-change-in-production
 JWT_EXPIRES_IN=7d
 PORT=3001
 FRONTEND_URL=http://localhost:3000
-
-# Optional: For future integrations
-CLOUDINARY_CLOUD_NAME=your-cloudinary-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=us-east-1
 ```
 
 ### Frontend (.env.local)
@@ -192,14 +183,39 @@ AWS_REGION=us-east-1
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
+### Switching to PostgreSQL (Optional)
+To use PostgreSQL instead of SQLite:
+
+1. Install PostgreSQL
+2. Update `backend/prisma/schema.prisma`:
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+3. Update `backend/.env`:
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/yultimate
+```
+4. Run: `npm run db:generate && npm run db:push && npm run db:seed`
+
+## Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed solutions.
+
+**Common Issues:**
+- Dependency conflicts: Run `npm install --legacy-peer-deps`
+- Port in use: Kill process or change port in `.env`
+- Database errors: Delete `backend/prisma/dev.db` and re-run setup
+
 ## Deployment
 
 ### Backend (Railway/Render)
-1. Create PostgreSQL database
+1. Create PostgreSQL database (switch from SQLite)
 2. Set environment variables
 3. Deploy backend code
-4. Run migrations: `npx prisma db push`
-5. Seed data: `npm run db:seed`
+4. Run: `npx prisma db push && npm run db:seed`
 
 ### Frontend (Vercel/Netlify)
 1. Connect repository
@@ -228,3 +244,8 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 ## License
 
 This project is licensed under the MIT License.
+
+---
+Housekeeping:
+- Removed the erroneous root dependency on `node.js` and added helpful root scripts (`npm run dev`, `npm run fix`, `npm run setup`, `npm run backend`, `npm run frontend`, DB helpers).
+- Left backend and frontend `package.json` files untouched.
