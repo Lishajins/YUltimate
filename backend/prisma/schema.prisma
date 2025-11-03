@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(SPECTATOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tournaments Tournament[]
+  children    Child[]
+  sessions    Session[]
+  homeVisits  HomeVisit[]
+
+  @@map("users")
+}
+
+model Tournament {
+  id          String   @id @default(cuid())
+  name        String
+  field       String
+  category    String
+  startDate   DateTime
+  endDate     DateTime?
+  status      TournamentStatus @default(UPCOMING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  
+  createdBy User @relation(fields: [createdById], references: [id])
+  teams     Team[]
+  
+  @@map("tournaments")
+}
+
+model Team {
+  id           String @id @default(cuid())
+  name         String
+  tournamentId String
+  spiritScore  Int    @default(0)
+  
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+  players    Player[]
+  
+  @@map("teams")
+}
+
+model Player {
+  id     String @id @default(cuid())
+  name   String
+  email  String?
+  teamId String
+  
+  team Team @relation(fields: [teamId], references: [id])
+  
+  @@map("players")
+}
+
+model Child {
+  id        String   @id @default(cuid())
+  name      String
+  age       Int
+  gender    Gender
+  coachId   String
+  createdAt DateTime @default(now())
+  
+  coach       User         @relation(fields: [coachId], references: [id])
+  attendances Attendance[]
+  assessments Assessment[]
+  
+  @@map("children")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime
+  coachId     String
+  createdAt   DateTime @default(now())
+  
+  coach       User         @relation(fields: [coachId], references: [id])
+  attendances Attendance[]
+  
+  @@map("sessions")
+}
+
+model Attendance {
+  id        String @id @default(cuid())
+  childId   String
+  sessionId String
+  present   Boolean @default(false)
+  
+  child   Child   @relation(fields: [childId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+  
+  @@unique([childId, sessionId])
+  @@map("attendances")
+}
+
+model Assessment {
+  id      String @id @default(cuid())
+  childId String
+  skill   String
+  score   Int
+  notes   String?
+  date    DateTime @default(now())
+  
+  child Child @relation(fields: [childId], references: [id])
+  
+  @@map("assessments")
+}
+
+model HomeVisit {
+  id        String   @id @default(cuid())
+  coachId   String
+  childName String
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  
+  coach User @relation(fields: [coachId], references: [id])
+  
+  @@map("home_visits")
+}
+
+model Gallery {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  title       String?
+  description String?
+  isPinned    Boolean  @default(false)
+  uploadedAt  DateTime @default(now())
+  
+  faces FaceTag[]
+  
+  @@map("gallery")
+}
+
+model FaceTag {
+  id        String @id @default(cuid())
+  galleryId String
+  playerId  String?
+  x         Float
+  y         Float
+  width     Float
+  height    Float
+  
+  gallery Gallery @relation(fields: [galleryId], references: [id])
+  
+  @@map("face_tags")
+}
+
+enum Role {
+  ADMIN
+  COACH
+  PLAYER
+  SPECTATOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum TournamentStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}

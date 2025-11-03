@@ -1,65 +1,160 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+
+interface AuthForm {
+  name?: string;
+  email: string;
+  password: string;
+  role?: string;
+}
 
 export default function Home() {
+  const { user, login, signup } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { register, handleSubmit, formState: { errors } } = useForm<AuthForm>();
+
+  if (user) {
+    router.push('/dashboard');
+    return null;
+  }
+
+  const onSubmit = async (data: AuthForm) => {
+    setLoading(true);
+    try {
+      if (isSignUp) {
+        await signup(data.name!, data.email, data.password, data.role);
+      } else {
+        await login(data.email, data.password);
+      }
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Auth error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-8 items-center">
+        {/* Welcome Section */}
+        <div className="text-center md:text-left">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            Welcome to <span className="text-blue-600">YUltimate</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xl text-gray-600 mb-8">
+            The ultimate platform for Ultimate Frisbee tournament management, 
+            coaching, and community building.
           </p>
+          <div className="space-y-4">
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+              Tournament Management & Leaderboards
+            </div>
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+              Coaching Tools & Progress Tracking
+            </div>
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+              Photo Gallery with AI Face Recognition
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Auth Form */}
+        <Card className="max-w-md mx-auto w-full">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isSignUp ? 'Create Account' : 'Sign In'}
+            </h2>
+            <p className="text-gray-600 mt-2">
+              {isSignUp ? 'Join the Ultimate Frisbee community' : 'Welcome back!'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {isSignUp && (
+              <Input
+                label="Full Name"
+                {...register('name', { required: 'Name is required' })}
+                error={errors.name?.message}
+              />
+            )}
+            
+            <Input
+              label="Email"
+              type="email"
+              {...register('email', { required: 'Email is required' })}
+              error={errors.email?.message}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            
+            <Input
+              label="Password"
+              type="password"
+              {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Password must be at least 6 characters' } })}
+              error={errors.password?.message}
+            />
+            
+            {isSignUp && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role
+                </label>
+                <select
+                  {...register('role')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="SPECTATOR">Spectator</option>
+                  <option value="PLAYER">Player</option>
+                  <option value="COACH">Coach</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+            )}
+            
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                login('spectator@yultimate.com', 'spectator123');
+                router.push('/dashboard');
+              }}
+              className="w-full"
+            >
+              Continue as Spectator
+            </Button>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
